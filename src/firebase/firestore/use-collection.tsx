@@ -15,7 +15,7 @@ import {
 import { useFirestore } from '@/firebase';
 
 export function useCollection<T = DocumentData>(
-  collectionPath: string | CollectionReference | Query
+  collectionPath: string | CollectionReference | Query | null
 ) {
   const db = useFirestore();
   const [data, setData] = useState<T[]>([]);
@@ -23,6 +23,11 @@ export function useCollection<T = DocumentData>(
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
+    if (!collectionPath) {
+      setLoading(false);
+      return;
+    }
+    
     let ref: Query | CollectionReference;
     if (typeof collectionPath === 'string') {
       ref = collection(db, collectionPath);
