@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   Sidebar,
   SidebarHeader,
@@ -18,20 +21,26 @@ import {
   Settings,
   HelpCircle,
 } from "lucide-react";
+import { useUser } from "@/firebase/auth/use-user";
 
 const menuItems = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
   { href: "/dashboard/records", icon: BookText, label: "Farm Records" },
   { href: "/dashboard/yield-prediction", icon: LineChart, label: "Yield Prediction" },
   { href: "/dashboard/analysis", icon: PieChart, label: "Cost Analysis" },
+];
+
+const adminMenuItems = [
   { href: "/dashboard/admin", icon: Shield, label: "Admin Panel" },
 ];
 
 export function AppSidebar() {
-  // NOTE: This is a simplified active state check.
-  // In a real app, you'd use `usePathname` from `next/navigation`
-  // which would make this a client component.
-  const isActive = (href: string) => typeof window !== 'undefined' && window.location.pathname === href;
+  const pathname = usePathname();
+  const { user } = useUser();
+  // This is a placeholder for admin role check
+  const isAdmin = true; 
+
+  const allMenuItems = isAdmin ? [...menuItems, ...adminMenuItems] : menuItems;
 
   return (
     <Sidebar>
@@ -45,11 +54,11 @@ export function AppSidebar() {
       </SidebarHeader>
       <SidebarContent className="p-2">
         <SidebarMenu>
-          {menuItems.map((item) => (
+          {allMenuItems.map((item) => (
             <SidebarMenuItem key={item.href}>
               <SidebarMenuButton
                 asChild
-                // isActive={isActive(item.href)}
+                isActive={pathname === item.href}
                 tooltip={{ children: item.label }}
               >
                 <Link href={item.href}>
