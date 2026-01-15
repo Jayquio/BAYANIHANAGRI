@@ -9,11 +9,12 @@ import { YieldOverTimeChart } from "@/components/dashboard/yield-over-time-chart
 import { RecentRecords } from "@/components/dashboard/recent-records";
 import type { FarmRecordWithProfit } from "@/lib/types";
 import { useUser } from "@/firebase/auth/use-user";
-import { useCollection } from "@/firebase";
-import { collection, query, where } from "firebase/firestore";
+import { useCollection, useDoc } from "@/firebase";
+import { collection, query, where, doc } from "firebase/firestore";
 import { useFirestore } from "@/firebase";
-import { useMemo } from "react";
+import { useMemo, useEffect } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useRouter } from "next/navigation";
 
 function getRecordsWithProfit(records: any[]): FarmRecordWithProfit[] {
   if (!records) return [];
@@ -27,6 +28,10 @@ function getRecordsWithProfit(records: any[]): FarmRecordWithProfit[] {
 export default function DashboardPage() {
   const { user, loading: userLoading } = useUser();
   const firestore = useFirestore();
+  const router = useRouter();
+
+  const userDocRef = user ? doc(firestore, `users/${user.uid}`) : null;
+  const { data: userProfile, loading: profileLoading } = useDoc<any>(userDocRef);
 
   const farmRecordsQuery = useMemo(() => {
     if (!user) return null;
@@ -35,23 +40,24 @@ export default function DashboardPage() {
 
   const { data: farmRecords, loading: recordsLoading } = useCollection<any>(farmRecordsQuery!);
 
+  useEffect(() => {
+    if (userProfile && userProfile.isAdmin) {
+      router.replace('/dashboard/admin');
+    }
+  }, [userProfile, router]);
+
+
   const recordsWithProfit = useMemo(() => getRecordsWithProfit(farmRecords), [farmRecords]);
 
-  const loading = userLoading || recordsLoading;
+  const loading = userLoading || recordsLoading || profileLoading;
 
-  if (loading) {
+  if (loading || (userProfile && userProfile.isAdmin)) { // Prevent rendering farmer dashboard for admin
     return (
       <div className="flex flex-col gap-8">
         <PageHeader
-          title="Welcome Back!"
-          description="Here's an overview of your farm's performance."
+          title="Welcome!"
+          description="Loading your dashboard..."
         >
-          <Button asChild>
-            <Link href="/dashboard/records">
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Add New Record
-            </Link>
-          </Button>
         </PageHeader>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <Skeleton className="h-28" />

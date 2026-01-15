@@ -22,9 +22,10 @@ import {
   HelpCircle,
 } from 'lucide-react';
 import { useUser } from '@/firebase/auth/use-user';
-import { useDoc } from '@/firebase';
+import { useDoc, useFirestore } from '@/firebase';
+import { doc } from 'firebase/firestore';
 
-const menuItems = [
+const farmerMenuItems = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { href: '/dashboard/records', icon: BookText, label: 'Farm Records' },
   {
@@ -36,19 +37,19 @@ const menuItems = [
 ];
 
 const adminMenuItems = [
-  { href: '/dashboard/admin', icon: Shield, label: 'Admin Panel' },
+  { href: '/dashboard/admin', icon: Shield, label: 'Admin Dashboard' },
 ];
 
 export function AppSidebar() {
   const pathname = usePathname();
   const { user } = useUser();
-  const { data: userProfile } = useDoc<any>(
-    user ? `users/${user.uid}` : null
-  );
+  const firestore = useFirestore();
+
+  const userDocRef = user ? doc(firestore, `users/${user.uid}`) : null;
+  const { data: userProfile } = useDoc<any>(userDocRef);
 
   const isAdmin = userProfile?.isAdmin === true;
-
-  const allMenuItems = isAdmin ? [...menuItems, ...adminMenuItems] : menuItems;
+  const menuItems = isAdmin ? adminMenuItems : farmerMenuItems;
 
   return (
     <Sidebar>
@@ -62,11 +63,11 @@ export function AppSidebar() {
       </SidebarHeader>
       <SidebarContent className="p-2">
         <SidebarMenu>
-          {allMenuItems.map((item) => (
+          {menuItems.map((item) => (
             <SidebarMenuItem key={item.href}>
               <SidebarMenuButton
                 asChild
-                isActive={pathname === item.href}
+                isActive={pathname.startsWith(item.href) && (item.href !== '/dashboard' || pathname === '/dashboard')}
                 tooltip={{ children: item.label }}
               >
                 <Link href={item.href}>
