@@ -1,0 +1,97 @@
+
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "A user of the application.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "The user's unique ID."
+        },
+        "name": {
+          "type": "string",
+          "description": "The user's full name."
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "The user's email address."
+        },
+        "farmLocation": {
+            "type": "string",
+            "description": "The location of the user's farm."
+        },
+        "totalArea": {
+            "type": "number",
+            "description": "The total area of the user's farm in hectares."
+        }
+      },
+      "required": ["id", "name", "email"]
+    },
+    "FarmRecord": {
+      "title": "Farm Record",
+      "description": "A record of a farm's activities.",
+      "type": "object",
+      "properties": {
+        "cropType": {
+          "type": "string",
+          "description": "The type of crop (e.g., rice, corn, banana, vegetables)."
+        },
+        "plantingDate": {
+          "type": "string",
+          "format": "date",
+          "description": "The date the crop was planted."
+        },
+        "area": {
+          "type": "number",
+          "description": "The area of the farm in hectares."
+        },
+        "expenses": {
+          "type": "number",
+          "description": "The total expenses for the crop in Philippine pesos."
+        },
+        "inputsUsed": {
+          "type": "string",
+          "description": "The types and amounts of inputs used (fertilizer, pesticides, etc.)."
+        },
+        "harvestQuantity": {
+            "type": "number",
+            "description": "The quantity of the harvest in sacks or kilograms."
+        },
+        "harvestDate": {
+            "type": "string",
+            "format": "date",
+            "description": "The date the crop was harvested."
+        },
+        "marketPrice": {
+            "type": "number",
+            "description": "The market price per unit of harvest."
+        },
+        "farmerId": {
+          "type": "string",
+          "description": "The ID of the farmer who owns this record."
+        }
+      },
+      "required": ["cropType", "plantingDate", "area", "expenses", "inputsUsed", "harvestQuantity", "harvestDate", "marketPrice", "farmerId"]
+    }
+  },
+  "auth": {
+    "providers": ["anonymous", "google.com", "password"]
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": {
+        "$ref": "#/entities/User"
+      },
+      "description": "Stores user profile information."
+    },
+    "/farmRecords/{farmRecordId}": {
+      "schema": {
+        "$ref": "#/entities/FarmRecord"
+      },
+      "description": "Stores individual farm records for all users."
+    }
+  }
+}
