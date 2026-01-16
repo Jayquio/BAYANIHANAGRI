@@ -7,7 +7,7 @@
  * - YieldPredictionOutput - The return type for the yieldPrediction function.
  */
 
-import {ai} from '@/ai/genkit';
+import {getAi} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const YieldPredictionInputSchema = z.object({
@@ -29,6 +29,8 @@ export type YieldPredictionOutput = z.infer<typeof YieldPredictionOutputSchema>;
 
 
 export async function yieldPrediction(input: YieldPredictionInput): Promise<YieldPredictionOutput> {
+    const ai = getAi();
+    
     const prompt = ai.definePrompt({
       name: 'yieldPredictionPrompt',
       input: {schema: YieldPredictionInputSchema},

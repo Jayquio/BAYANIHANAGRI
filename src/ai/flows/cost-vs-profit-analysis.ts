@@ -8,7 +8,7 @@
  * - CostVsProfitAnalysisOutput - The return type for the costVsProfitAnalysis function.
  */
 
-import {ai} from '@/ai/genkit';
+import {getAi} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const CostVsProfitAnalysisInputSchema = z.object({
@@ -31,6 +31,8 @@ export type CostVsProfitAnalysisOutput = z.infer<typeof CostVsProfitAnalysisOutp
 
 
 export async function costVsProfitAnalysis(input: CostVsProfitAnalysisInput): Promise<CostVsProfitAnalysisOutput> {
+  const ai = getAi();
+  
   const prompt = ai.definePrompt({
     name: 'costVsProfitAnalysisPrompt',
     input: {schema: CostVsProfitAnalysisInputSchema},
