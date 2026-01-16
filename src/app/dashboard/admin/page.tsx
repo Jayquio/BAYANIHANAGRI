@@ -13,6 +13,7 @@ import { AdminClient } from '@/components/dashboard/admin/admin-client';
 import { Logo } from '@/components/icons';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { AlertTriangle } from 'lucide-react';
 
 
 type VerificationStatus = 'VERIFYING' | 'ALLOWED' | 'DENIED';
@@ -58,8 +59,8 @@ export default function AdminPage() {
     return query(collection(firestore, 'farmRecords'));
   }, [status, firestore]);
 
-  const { data: users, loading: usersLoading } = useCollection<User>(usersQuery);
-  const { data: farmRecords, loading: recordsLoading } =
+  const { data: users, loading: usersLoading, error: usersError } = useCollection<User>(usersQuery);
+  const { data: farmRecords, loading: recordsLoading, error: recordsError } =
     useCollection<FarmRecord>(farmRecordsQuery);
 
   if (status !== 'ALLOWED') {
@@ -71,6 +72,27 @@ export default function AdminPage() {
         </p>
       </div>
     );
+  }
+
+  const permissionError = usersError || recordsError;
+  if (permissionError) {
+    return (
+       <div className="flex h-screen w-full flex-col items-center justify-center bg-background p-4">
+         <div className="flex flex-col items-center gap-4 rounded-lg border border-destructive/50 bg-card p-8 text-center shadow-lg">
+            <AlertTriangle className="h-16 w-16 text-destructive" />
+            <h2 className="font-headline text-2xl font-bold">Permission Denied</h2>
+            <p className="max-w-md text-muted-foreground">
+              You do not have permission to view this page. Please contact your administrator or ensure your account has the correct permissions set in the database.
+            </p>
+             <p className="mt-2 text-sm text-muted-foreground">
+              (Hint: Set the <code className="bg-muted px-1 py-0.5 rounded-sm">isAdmin</code> field to <code className="bg-muted px-1 py-0.5 rounded-sm">true</code> on your user document in the Firestore <code className="bg-muted px-1 py-0.5 rounded-sm">users</code> collection).
+            </p>
+            <pre className="mt-2 text-xs bg-muted p-2 rounded-md text-left text-destructive">
+               {permissionError.message}
+            </pre>
+        </div>
+      </div>
+    )
   }
 
   const pageDataLoading = usersLoading || recordsLoading;
