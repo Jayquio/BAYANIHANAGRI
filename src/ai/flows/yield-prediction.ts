@@ -1,4 +1,3 @@
-// src/ai/flows/yield-prediction.ts
 'use server';
 /**
  * @fileOverview A yield prediction AI agent.
@@ -28,34 +27,30 @@ const YieldPredictionOutputSchema = z.object({
 });
 export type YieldPredictionOutput = z.infer<typeof YieldPredictionOutputSchema>;
 
+// This is now a standard async function, compliant with "use server"
 export async function yieldPrediction(input: YieldPredictionInput): Promise<YieldPredictionOutput> {
-  return yieldPredictionFlow(input);
-}
+  // The AI prompt is defined on-demand inside the function
+  const prompt = ai.definePrompt({
+    name: 'yieldPredictionPrompt',
+    input: {schema: YieldPredictionInputSchema},
+    output: {schema: YieldPredictionOutputSchema},
+    prompt: `You are an AI-powered agricultural advisor for Filipino farmers. Based on the historical data, crop type, planting date, expenses, and inputs, predict the yield for the farm.
 
-const prompt = ai.definePrompt({
-  name: 'yieldPredictionPrompt',
-  input: {schema: YieldPredictionInputSchema},
-  output: {schema: YieldPredictionOutputSchema},
-  prompt: `You are an AI-powered agricultural advisor for Filipino farmers. Based on the historical data, crop type, planting date, expenses, and inputs, predict the yield for the farm.
+    Provide a predicted yield in sacks/kg, a confidence score (0-1), and insights with planting recommendations. Your analysis should be based on the following information.
 
-  Crop Type: {{{cropType}}}
-  Planting Date: {{{plantingDate}}}
-  Area (hectares): {{{area}}}
-  Expenses (₱): {{{expenses}}}
-  Inputs Used: {{{inputsUsed}}}
-  Past Harvest Data: {{{pastHarvestData}}}
+    Crop Type: {{{cropType}}}
+    Planting Date: {{{plantingDate}}}
+    Area (hectares): {{{area}}}
+    Expenses (₱): {{{expenses}}}
+    Inputs Used: {{{inputsUsed}}}
+    Past Harvest Data: {{{pastHarvestData}}}
+    `,
+  });
 
-  Provide a predicted yield in sacks/kg, a confidence score (0-1), and insights with planting recommendations.`,
-});
-
-const yieldPredictionFlow = ai.defineFlow(
-  {
-    name: 'yieldPredictionFlow',
-    inputSchema: YieldPredictionInputSchema,
-    outputSchema: YieldPredictionOutputSchema,
-  },
-  async input => {
-    const {output} = await prompt(input);
-    return output!;
+  // Execute the prompt and return the output
+  const {output} = await prompt(input);
+  if (!output) {
+      throw new Error("AI prediction returned no output.");
   }
-);
+  return output;
+}
