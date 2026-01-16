@@ -119,7 +119,7 @@ export function AdminClient({ users, farmRecords }: AdminClientProps) {
             <TableHeader>
               <TableRow>
                 <TableHead>Farmer</TableHead>
-                <TableHead>Location</TableHead>
+                <TableHead className="hidden sm:table-cell">Location</TableHead>
                 <TableHead className="hidden sm:table-cell">
                   Total Area
                 </TableHead>
@@ -150,7 +150,7 @@ export function AdminClient({ users, farmRecords }: AdminClientProps) {
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell>{farmer.farmLocation || 'N/A'}</TableCell>
+                  <TableCell className="hidden sm:table-cell">{farmer.farmLocation || 'N/A'}</TableCell>
                   <TableCell className="hidden sm:table-cell">
                     {farmer.totalArea || 0} ha
                   </TableCell>
