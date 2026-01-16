@@ -8,6 +8,7 @@ import {
 import {
   costVsProfitAnalysis,
   CostVsProfitAnalysisInput,
+  CostVsProfitAnalysisInputSchema,
 } from "@/ai/flows/cost-vs-profit-analysis";
 import type { FarmRecord } from "@/lib/types";
 
@@ -50,24 +51,49 @@ export async function getYieldPrediction(prevState: any, formData: FormData) {
 }
 
 export async function getCostVsProfitAnalysis(farmRecords: FarmRecord[]) {
+  // Guard against empty records
+  if (!farmRecords || farmRecords.length === 0) {
+    return { message: "No farm records found to analyze." };
+  }
+
   try {
-    // The AI schema is strict. We must map the records to only include the
-    // fields the AI model is expecting, otherwise Zod validation will fail.
+    // Sanitize and map records to match the AI's expected input schema
     const analysisRecords = farmRecords.map((record) => ({
-      cropType: record.cropType,
-      harvestDate: record.harvestDate,
-      expenses: record.expenses,
-      harvestQuantity: record.harvestQuantity,
-      marketPrice: record.marketPrice,
+      cropType: record.cropType ?? "",
+      // Ensure date is in YYYY-MM-DD format
+      harvestDate: record.harvestDate
+        ? new Date(record.harvestDate).toISOString().split("T")[0]
+        : "",
+      expenses: Number(record.expenses) || 0,
+      harvestQuantity: Number(record.harvestQuantity) || 0,
+      marketPrice: Number(record.marketPrice) || 0,
     }));
 
     const input: CostVsProfitAnalysisInput = {
       farmRecords: analysisRecords,
     };
-    const result = await costVsProfitAnalysis(input);
+    
+    // For debugging: Log the sanitized input
+    console.log("Input for AI analysis:", JSON.stringify(input, null, 2));
+
+    // Validate the input against the Zod schema before calling the AI
+    const validated = CostVsProfitAnalysisInputSchema.safeParse(input);
+
+    if (!validated.success) {
+      console.error("AI input validation failed:", validated.error.flatten());
+      return {
+        message: "Data validation failed. Check records for missing/invalid data.",
+        errors: validated.error.flatten().fieldErrors,
+      };
+    }
+
+    // Call the AI flow with the validated data
+    const result = await costVsProfitAnalysis(validated.data);
     return { message: "success", data: result };
-  } catch (error) {
-    console.error(error);
+
+  } catch (error: any) {
+    // For debugging: Log the error from the AI call
+    console.error("AI analysis error:", error);
     return { message: "Analysis failed. Please try again." };
   }
 }

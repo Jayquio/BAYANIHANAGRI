@@ -11,7 +11,7 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
-const CostVsProfitAnalysisInputSchema = z.object({
+export const CostVsProfitAnalysisInputSchema = z.object({
   farmRecords: z.array(
     z.object({
       cropType: z.string().describe('The type of crop (e.g., rice, corn).'),
@@ -41,7 +41,7 @@ const prompt = ai.definePrompt({
 
   Analyze the provided farm records to identify cost trends and profit margins over time. For each record, calculate the revenue (harvestQuantity * marketPrice) and the profit (revenue - expenses).
 
-  Provide clear and actionable recommendations for optimizing expenses and improving profitability. Group your analysis by crop type if multiple types are present.
+  Provide a clear and actionable report. Start with a summary of overall profitability. Then, group your analysis by crop type if multiple types are present. For each crop, discuss cost trends, revenue, and profit margins. Finally, provide specific, actionable recommendations for optimizing expenses and improving profitability.
 
   Farm Records:
   {{#each farmRecords}}
