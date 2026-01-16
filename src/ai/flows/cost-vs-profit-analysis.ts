@@ -26,14 +26,22 @@ const CostVsProfitAnalysisOutputSchema = z.object({
 });
 export type CostVsProfitAnalysisOutput = z.infer<typeof CostVsProfitAnalysisOutputSchema>;
 
-// Initialize AI and define the prompt once at the top level of the module.
-// This prevents re-registration errors on subsequent function calls.
-const ai = getAi();
-const costVsProfitPrompt = ai.definePrompt({
-  name: 'costVsProfitAnalysisPrompt',
-  input: {schema: CostVsProfitAnalysisInputSchema},
-  output: {schema: CostVsProfitAnalysisOutputSchema},
-  prompt: `You are an expert agricultural analyst specializing in providing cost versus profit analysis for farmers in the Philippines.
+// Store the singleton instance of the prompt.
+let costVsProfitPrompt: any = null;
+
+/**
+ * Initializes and returns a singleton instance of the Genkit prompt.
+ * This lazy initialization ensures that Genkit and the prompt are only
+ * defined when the function is first called.
+ */
+function getCostVsProfitPrompt() {
+    if (!costVsProfitPrompt) {
+        const ai = getAi();
+        costVsProfitPrompt = ai.definePrompt({
+          name: 'costVsProfitAnalysisPrompt',
+          input: {schema: CostVsProfitAnalysisInputSchema},
+          output: {schema: CostVsProfitAnalysisOutputSchema},
+          prompt: `You are an expert agricultural analyst specializing in providing cost versus profit analysis for farmers in the Philippines.
 
   Analyze the provided farmRecords to identify cost trends and profit margins over time. For each record, calculate the revenue (harvestQuantity * marketPrice) and the profit (revenue - expenses).
 
@@ -44,11 +52,14 @@ const costVsProfitPrompt = ai.definePrompt({
   - Crop Type: {{cropType}}, Harvest Date: {{harvestDate}}, Expenses: ₱{{expenses}}, Harvest Quantity: {{harvestQuantity}}, Market Price: ₱{{marketPrice}}/unit
   {{/each}}
   `,
-});
-
+        });
+    }
+    return costVsProfitPrompt;
+}
 
 export async function costVsProfitAnalysis(input: CostVsProfitAnalysisInput): Promise<CostVsProfitAnalysisOutput> {
-  const {output} = await costVsProfitPrompt(input);
+  const prompt = getCostVsProfitPrompt();
+  const {output} = await prompt(input);
   
   if (!output) {
     throw new Error("AI failed to return an analysis.");

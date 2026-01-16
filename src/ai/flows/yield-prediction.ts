@@ -21,14 +21,22 @@ const YieldPredictionOutputSchema = z.object({
 export type YieldPredictionOutput = z.infer<typeof YieldPredictionOutputSchema>;
 
 
-// Initialize AI and define the prompt once at the top level of the module.
-// This prevents re-registration errors on subsequent function calls.
-const ai = getAi();
-const yieldPredictionPrompt = ai.definePrompt({
-    name: 'yieldPredictionPrompt',
-    input: { schema: YieldPredictionInputSchema },
-    output: { schema: YieldPredictionOutputSchema },
-    prompt: `You are an AI-powered agricultural advisor for Filipino farmers. Based on the historical data, crop type, planting date, expenses, and inputs, predict the yield for the farm.
+// Store the singleton instance of the prompt.
+let yieldPredictionPrompt: any = null;
+
+/**
+ * Initializes and returns a singleton instance of the Genkit prompt.
+ * This lazy initialization ensures that Genkit and the prompt are only
+ * defined when the function is first called.
+ */
+function getYieldPredictionPrompt() {
+    if (!yieldPredictionPrompt) {
+        const ai = getAi();
+        yieldPredictionPrompt = ai.definePrompt({
+            name: 'yieldPredictionPrompt',
+            input: { schema: YieldPredictionInputSchema },
+            output: { schema: YieldPredictionOutputSchema },
+            prompt: `You are an AI-powered agricultural advisor for Filipino farmers. Based on the historical data, crop type, planting date, expenses, and inputs, predict the yield for the farm.
 
 Your response MUST be a valid JSON object with the following keys: "predictedYield" (number), "confidence" (a number between 0 and 1), and "insights" (string).
 
@@ -41,10 +49,15 @@ Expenses (₱): {{expenses}}
 Inputs Used: {{inputsUsed}}
 Past Harvest Data: {{pastHarvestData}}
 `
-});
+        });
+    }
+    return yieldPredictionPrompt;
+}
+
 
 export async function yieldPrediction(input: YieldPredictionInput): Promise<YieldPredictionOutput> {
-    const { output } = await yieldPredictionPrompt(input);
+    const prompt = getYieldPredictionPrompt();
+    const { output } = await prompt(input);
     if (!output) {
         throw new Error("AI failed to return a prediction.");
     }
