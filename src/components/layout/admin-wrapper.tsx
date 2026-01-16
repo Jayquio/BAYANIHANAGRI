@@ -13,29 +13,37 @@ export function AdminWrapper({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const firestore = useFirestore();
 
+  // The doc ref depends on the user, so it will be null initially.
+  // useDoc is designed to handle a null ref.
   const userDocRef = user ? doc(firestore, `users/${user.uid}`) : null;
   const { data: userProfile, loading: profileLoading } = useDoc<any>(
     userDocRef
   );
 
-  const doneLoading = !userLoading && !profileLoading;
-  const isDefinitelyAdmin = doneLoading && userProfile?.isAdmin === true;
+  // We are loading if either the user auth state or the profile doc is loading.
+  const isLoading = userLoading || profileLoading;
 
   useEffect(() => {
-    // Once all data is loaded, if the user is NOT an admin, redirect them away.
-    if (doneLoading && !isDefinitelyAdmin) {
-      router.replace('/dashboard');
+    // This effect runs whenever the loading or profile status changes.
+    // If we are done loading...
+    if (!isLoading) {
+      // ...and the user is not an admin (or doesn't have a profile)...
+      if (userProfile?.isAdmin !== true) {
+        // ...redirect them.
+        router.replace('/dashboard');
+      }
     }
-  }, [doneLoading, isDefinitelyAdmin, router]);
+  }, [isLoading, userProfile, router]);
 
 
-  // If the user is confirmed as an admin, show the dashboard content.
-  if (isDefinitelyAdmin) {
+  // If the user is a confirmed admin, show the dashboard content.
+  if (!isLoading && userProfile?.isAdmin === true) {
     return <>{children}</>;
   }
 
-  // In all other cases (still loading, not an admin, etc.), show the verification
-  // screen. The useEffect above will handle the redirection if necessary.
+  // In all other cases (still loading, or is not an admin and is about to be
+  // redirected by the useEffect), show the full-screen verification loader.
+  // This prevents any content from flashing before the user's status is confirmed.
   return (
     <div className="flex h-screen w-full flex-col items-center justify-center bg-background">
       <Logo className="h-24 w-24 animate-pulse text-primary" />
