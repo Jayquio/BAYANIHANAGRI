@@ -9,20 +9,20 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   return (
-    <AdminWrapper>
-      <SidebarProvider>
-        <div className="min-h-screen w-full bg-background">
-          <AppSidebar />
-          <SidebarInset>
-            <div className="flex h-full flex-col">
-              <AppHeader />
-              <main className="flex-1 overflow-y-auto p-4 md:p-8">
+    <SidebarProvider>
+      <div className="min-h-screen w-full bg-background">
+        <AppSidebar />
+        <SidebarInset>
+          <div className="flex h-full flex-col">
+            <AppHeader />
+            <main className="flex-1 overflow-y-auto p-4 md:p-8">
+              <AdminWrapper>
                 {children}
-              </main>
-            </div>
-          </SidebarInset>
-        </div>
-      </SidebarProvider>
-    </AdminWrapper>
+              </AdminWrapper>
+            </main>
+          </div>
+        </SidebarInset>
+      </div>
+    </SidebarProvider>
   );
 }

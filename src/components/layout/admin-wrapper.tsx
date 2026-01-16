@@ -50,7 +50,7 @@ export function AdminWrapper({ children }: { children: React.ReactNode }) {
 
   // For 'VERIFYING' or 'DENIED' (before redirect completes), show loading.
   return (
-    <div className="flex h-screen w-full flex-col items-center justify-center bg-background">
+    <div className="flex h-full w-full flex-col items-center justify-center">
       <Logo className="h-24 w-24 animate-pulse text-primary" />
       <p className="mt-4 text-lg text-muted-foreground">
         Verifying permissions...
