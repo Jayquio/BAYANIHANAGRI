@@ -10,6 +10,7 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarFooter,
+  useSidebar,
 } from '@/components/ui/sidebar';
 import { Logo } from '@/components/icons';
 import {
@@ -44,6 +45,7 @@ export function AppSidebar() {
   const pathname = usePathname();
   const { user } = useUser();
   const firestore = useFirestore();
+  const { setOpenMobile } = useSidebar();
 
   const userDocRef = user ? doc(firestore, `users/${user.uid}`) : null;
   const { data: userProfile } = useDoc<any>(userDocRef);
@@ -51,10 +53,18 @@ export function AppSidebar() {
   const isAdmin = userProfile?.isAdmin === true;
   const menuItems = isAdmin ? adminMenuItems : farmerMenuItems;
 
+  const handleLinkClick = () => {
+    setOpenMobile(false);
+  };
+
   return (
     <Sidebar>
       <SidebarHeader>
-        <Link href="/dashboard" className="flex items-center gap-2">
+        <Link
+          href="/dashboard"
+          className="flex items-center gap-2"
+          onClick={handleLinkClick}
+        >
           <Logo className="h-8 w-8 text-primary" />
           <h2 className="font-headline text-lg font-semibold tracking-tight">
             BayanihanAgri
@@ -67,10 +77,13 @@ export function AppSidebar() {
             <SidebarMenuItem key={item.href}>
               <SidebarMenuButton
                 asChild
-                isActive={pathname.startsWith(item.href) && (item.href !== '/dashboard' || pathname === '/dashboard')}
+                isActive={
+                  pathname.startsWith(item.href) &&
+                  (item.href !== '/dashboard' || pathname === '/dashboard')
+                }
                 tooltip={{ children: item.label }}
               >
-                <Link href={item.href}>
+                <Link href={item.href} onClick={handleLinkClick}>
                   <item.icon />
                   <span>{item.label}</span>
                 </Link>
