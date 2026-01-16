@@ -142,9 +142,9 @@ export function AdminClient({ users, farmRecords }: AdminClientProps) {
                           {getInitials(farmer.name)}
                         </AvatarFallback>
                       </Avatar>
-                      <div className="grid gap-0.5">
-                        <p className="font-medium">{farmer.name}</p>
-                        <p className="text-sm text-muted-foreground">
+                      <div className="grid min-w-0 gap-0.5">
+                        <p className="truncate font-medium">{farmer.name}</p>
+                        <p className="truncate text-sm text-muted-foreground">
                           {farmer.email}
                         </p>
                       </div>

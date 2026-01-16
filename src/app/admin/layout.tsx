@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Bell, LogOut, ChevronDown, User as UserIcon, Settings, BarChart2 } from 'lucide-react';
+import { Bell, LogOut, ChevronDown, BarChart2 } from 'lucide-react';
 import { Logo } from '@/components/icons';
 
 interface AdminLayoutProps {
@@ -55,23 +55,10 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
           </Link>
 
           {/* Navigation Links */}
-          <nav className="hidden md:flex items-center gap-6">
+          <nav className="flex items-center gap-6">
             <Link href="/admin" className="text-sm font-medium text-foreground hover:text-primary transition-colors">
               Dashboard
             </Link>
-            {/* The other links are not implemented, so they are disabled for now */}
-            <span className="text-sm font-medium text-muted-foreground cursor-not-allowed">
-              Farmers
-            </span>
-             <span className="text-sm font-medium text-muted-foreground cursor-not-allowed">
-              Farm Records
-            </span>
-             <span className="text-sm font-medium text-muted-foreground cursor-not-allowed">
-              Analytics
-            </span>
-             <span className="text-sm font-medium text-muted-foreground cursor-not-allowed">
-              Settings
-            </span>
           </nav>
 
           {/* User Profile */}
@@ -105,10 +92,6 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                   <DropdownMenuItem onClick={() => router.push('/dashboard')}>
                     <BarChart2 className="mr-2 h-4 w-4" />
                     <span>Farmer View</span>
-                  </DropdownMenuItem>
-                   <DropdownMenuItem>
-                    <Settings className="mr-2 h-4 w-4" />
-                    <span>Settings</span>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:bg-destructive/10 focus:text-destructive">
