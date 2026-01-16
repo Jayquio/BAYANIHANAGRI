@@ -27,15 +27,15 @@ const CostVsProfitAnalysisOutputSchema = z.object({
 export type CostVsProfitAnalysisOutput = z.infer<typeof CostVsProfitAnalysisOutputSchema>;
 
 
-// Get AI instance ONCE at the top level
-const ai = getAi();
-
-// Define prompt OUTSIDE the function so it doesn't crash on re-runs
-const costVsProfitPrompt = ai.definePrompt({
-  name: 'costVsProfitAnalysisPrompt',
-  input: {schema: CostVsProfitAnalysisInputSchema},
-  output: {schema: CostVsProfitAnalysisOutputSchema},
-  prompt: `You are an expert agricultural analyst specializing in providing cost versus profit analysis for farmers in the Philippines.
+export async function costVsProfitAnalysis(input: CostVsProfitAnalysisInput): Promise<CostVsProfitAnalysisOutput> {
+  // AI is initialized and the prompt is defined inside the request handler,
+  // which is compliant with Next.js Server Actions.
+  const ai = getAi();
+  
+  const costVsProfitPrompt = ai.definePrompt({
+    input: {schema: CostVsProfitAnalysisInputSchema},
+    output: {schema: CostVsProfitAnalysisOutputSchema},
+    prompt: `You are an expert agricultural analyst specializing in providing cost versus profit analysis for farmers in the Philippines.
 
   Analyze the provided farmRecords to identify cost trends and profit margins over time. For each record, calculate the revenue (harvestQuantity * marketPrice) and the profit (revenue - expenses).
 
@@ -46,9 +46,8 @@ const costVsProfitPrompt = ai.definePrompt({
   - Crop Type: {{cropType}}, Harvest Date: {{harvestDate}}, Expenses: ₱{{expenses}}, Harvest Quantity: {{harvestQuantity}}, Market Price: ₱{{marketPrice}}/unit
   {{/each}}
   `,
-});
+  });
 
-export async function costVsProfitAnalysis(input: CostVsProfitAnalysisInput): Promise<CostVsProfitAnalysisOutput> {
   const {output} = await costVsProfitPrompt(input);
   
   if (!output) {
