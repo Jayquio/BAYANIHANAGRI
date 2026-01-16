@@ -13,37 +13,48 @@ export function AdminWrapper({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const firestore = useFirestore();
 
-  // The doc ref depends on the user, so it will be null initially.
-  // useDoc is designed to handle a null ref.
   const userDocRef = user ? doc(firestore, `users/${user.uid}`) : null;
   const { data: userProfile, loading: profileLoading } = useDoc<any>(
     userDocRef
   );
 
-  // We are loading if either the user auth state or the profile doc is loading.
-  const isLoading = userLoading || profileLoading;
+  // Determine the definitive loading state. We are loading if auth is pending,
+  // or if we have a user but are still waiting for their profile to load.
+  const isLoading = userLoading || (user && profileLoading);
 
   useEffect(() => {
-    // This effect runs whenever the loading or profile status changes.
-    // If we are done loading...
+    // This effect should only handle redirection once loading is fully complete.
     if (!isLoading) {
-      // ...and the user is not an admin (or doesn't have a profile)...
-      if (userProfile?.isAdmin !== true) {
-        // ...redirect them.
+      // If loading is done and the user is NOT a verified admin, redirect them.
+      if (!userProfile?.isAdmin) {
         router.replace('/dashboard');
       }
     }
   }, [isLoading, userProfile, router]);
 
 
-  // If the user is a confirmed admin, show the dashboard content.
-  if (!isLoading && userProfile?.isAdmin === true) {
+  // STATE 1: We are still loading authentication or profile data.
+  // Show the full-screen loader. This is the key to preventing the flicker.
+  if (isLoading) {
+    return (
+      <div className="flex h-screen w-full flex-col items-center justify-center bg-background">
+        <Logo className="h-24 w-24 animate-pulse text-primary" />
+        <p className="mt-4 text-lg text-muted-foreground">
+          Verifying permissions...
+        </p>
+      </div>
+    );
+  }
+
+  // STATE 2: Loading is complete AND the user is a verified admin.
+  // Only in this case do we render the children (the admin dashboard).
+  if (userProfile?.isAdmin) {
     return <>{children}</>;
   }
 
-  // In all other cases (still loading, or is not an admin and is about to be
-  // redirected by the useEffect), show the full-screen verification loader.
-  // This prevents any content from flashing before the user's status is confirmed.
+  // STATE 3: Loading is complete but the user is NOT an admin.
+  // The useEffect is handling the redirect. In the meantime, we continue
+  // to show the loading screen to prevent any content from flashing.
   return (
     <div className="flex h-screen w-full flex-col items-center justify-center bg-background">
       <Logo className="h-24 w-24 animate-pulse text-primary" />
