@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { useState } from "react";
 import {
@@ -89,7 +89,6 @@ export function RecordsClient({
 
   const handleEditClick = (record: FarmRecordWithProfit) => {
     setEditingRecordId(record.id);
-    // The date needs to be in 'yyyy-MM-dd' format for the input[type=date]
     const plantingDate = new Date(record.plantingDate).toISOString().split('T')[0];
     const harvestDate = new Date(record.harvestDate).toISOString().split('T')[0];
     form.reset({ ...record, plantingDate, harvestDate });
@@ -113,23 +112,21 @@ export function RecordsClient({
     setIsSubmitting(true);
     try {
       if (editingRecordId) {
-        // Update existing record
         const recordRef = doc(firestore, "farmRecords", editingRecordId);
         await updateDoc(recordRef, values);
         toast({
-          title: "Success",
-          description: "Farm record updated successfully.",
+          title: "Updated",
+          description: "Record updated successfully.",
         });
       } else {
-        // Add new record
         const newRecord: FarmRecord = {
           ...values,
           farmerId: user.uid,
         };
         await addDoc(collection(firestore, "farmRecords"), newRecord);
         toast({
-          title: "Success",
-          description: "Farm record added successfully.",
+          title: "Saved",
+          description: "Record added successfully.",
         });
       }
       cancelEdit();
@@ -150,7 +147,7 @@ export function RecordsClient({
     try {
       await deleteDoc(docRef);
       toast({
-        title: "Success",
+        title: "Deleted",
         description: "Record deleted.",
       });
     } catch (error: any) {
@@ -168,18 +165,16 @@ export function RecordsClient({
       <div className="lg:col-span-2">
         <Card>
           <CardHeader>
-            <CardTitle className="font-headline">Farm Records</CardTitle>
-            <CardDescription>
-              Manage and view all your farm records.
-            </CardDescription>
+            <CardTitle>Farm Records</CardTitle>
+            <CardDescription>Manage and view all your farm records.</CardDescription>
           </CardHeader>
           <CardContent>
-            {/* ===== MOBILE VIEW ===== */}
+            {/* ===== MOBILE CARDS ===== */}
             <div className="space-y-4 md:hidden">
               {records.map((record) => (
-                <div key={record.id} className="rounded-lg border p-4 space-y-3">
+                <div key={record.id} className="border rounded-lg p-4 space-y-3">
                   <div className="flex justify-between items-start">
-                    <div>
+                     <div>
                       <p className="font-medium">{record.cropType}</p>
                       <p className="text-sm text-muted-foreground">
                         Planted: {new Date(record.plantingDate).toLocaleDateString()}
@@ -209,7 +204,8 @@ export function RecordsClient({
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
-                  <div className="grid grid-cols-2 gap-3 text-sm">
+
+                   <div className="grid grid-cols-2 gap-3 text-sm">
                       <div>
                           <p className="text-muted-foreground">Harvested</p>
                           <p>{new Date(record.harvestDate).toLocaleDateString()}</p>
@@ -222,16 +218,16 @@ export function RecordsClient({
                           <p className="text-muted-foreground">Expenses</p>
                           <p>{formatCurrency(record.expenses)}</p>
                       </div>
-                      <div>
+                      <div className={record.profit >= 0 ? 'text-primary' : 'text-destructive'}>
                           <p className="text-muted-foreground">Profit</p>
-                          <p className={`${record.profit >= 0 ? 'text-primary' : 'text-destructive'}`}>{formatCurrency(record.profit)}</p>
+                          <p>{formatCurrency(record.profit)}</p>
                       </div>
                   </div>
                 </div>
               ))}
             </div>
 
-            {/* ===== DESKTOP VIEW ===== */}
+            {/* ===== DESKTOP TABLE ===== */}
             <div className="hidden md:block">
               <Table>
                 <TableHeader>
@@ -290,22 +286,17 @@ export function RecordsClient({
               </Table>
             </div>
           </CardContent>
-          <CardFooter>
-            <div className="text-xs text-muted-foreground">
-              Showing <strong>1-{records.length}</strong> of{" "}
-              <strong>{records.length}</strong> records
-            </div>
-          </CardFooter>
         </Card>
       </div>
 
+      {/* ================= FORM ================= */}
       <div>
         <Card>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)}>
               <CardHeader>
-                <CardTitle className="font-headline">{editingRecordId ? 'Edit Record' : 'Add New Record'}</CardTitle>
-                <CardDescription>
+                <CardTitle>{editingRecordId ? 'Edit Record' : 'Add Record'}</CardTitle>
+                 <CardDescription>
                   {editingRecordId ? 'Update the details for this record.' : 'Fill out the form to add a new farm record.'}
                 </CardDescription>
               </CardHeader>
