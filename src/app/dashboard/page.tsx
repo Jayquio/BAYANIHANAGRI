@@ -51,8 +51,8 @@ export default function DashboardPage() {
     if (!initialDataLoading) {
       // and we have confirmed the user is an admin...
       if (userProfile?.isAdmin) {
-        // ...redirect them to the admin page.
-        router.replace('/dashboard/admin');
+        // ...redirect them to the new top-level admin page.
+        router.replace('/admin');
       }
     }
   }, [initialDataLoading, userProfile, router]);
