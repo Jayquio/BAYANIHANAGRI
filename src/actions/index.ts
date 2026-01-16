@@ -11,7 +11,7 @@ import {
 } from "@/ai/flows/cost-vs-profit-analysis";
 import type { FarmRecord } from "@/lib/types";
 
-const yieldPredictionSchema = z.object({
+const yieldPredictionFormSchema = z.object({
   cropType: z.string().min(1, "Crop type is required."),
   plantingDate: z.string().min(1, "Planting date is required."),
   area: z.coerce.number().positive("Area must be a positive number."),
@@ -20,30 +20,9 @@ const yieldPredictionSchema = z.object({
   pastHarvestData: z.string().min(1, "Past harvest data is required."),
 });
 
-// Schema for validation, moved here to fix 'use server' export error.
-const CostVsProfitAnalysisInputSchema = z.object({
-  farmRecords: z.array(
-    z.object({
-      cropType: z.string().describe("The type of crop (e.g., rice, corn)."),
-      harvestDate: z
-        .string()
-        .describe("The date the crop was harvested (YYYY-MM-DD)."),
-      expenses: z
-        .number()
-        .describe("The total expenses for the crop in Philippine pesos."),
-      harvestQuantity: z
-        .number()
-        .describe("The quantity of the harvest in sacks or kilograms."),
-      marketPrice: z
-        .number()
-        .describe("The market price per unit of harvest."),
-    })
-  ),
-});
-
 
 export async function getYieldPrediction(prevState: any, formData: FormData) {
-  const validatedFields = yieldPredictionSchema.safeParse({
+  const validatedFields = yieldPredictionFormSchema.safeParse({
     cropType: formData.get("cropType"),
     plantingDate: formData.get("plantingDate"),
     area: formData.get("area"),
@@ -60,28 +39,23 @@ export async function getYieldPrediction(prevState: any, formData: FormData) {
   }
 
   try {
-    const input: YieldPredictionInput = {
-      ...validatedFields.data,
-    };
-    const result = await yieldPrediction(input);
+    const result = await yieldPrediction(validatedFields.data);
     return { message: "success", data: result };
-  } catch (error) {
+  } catch (error: any) {
     console.error(error);
-    return { message: "Prediction failed. Please try again." };
+    return { message: error.message || "Prediction failed. Please try again." };
   }
 }
 
 export async function getCostVsProfitAnalysis(farmRecords: FarmRecord[]) {
-  // Guard against empty records
   if (!farmRecords || farmRecords.length === 0) {
     return { message: "No farm records found to analyze." };
   }
 
   try {
-    // Sanitize and map records to match the AI's expected input schema
+    // The AI function now handles its own validation. We just pass the data.
     const analysisRecords = farmRecords.map((record) => ({
       cropType: record.cropType ?? "",
-      // Ensure date is in YYYY-MM-DD format
       harvestDate: record.harvestDate
         ? new Date(record.harvestDate).toISOString().split("T")[0]
         : "",
@@ -94,27 +68,11 @@ export async function getCostVsProfitAnalysis(farmRecords: FarmRecord[]) {
       farmRecords: analysisRecords,
     };
     
-    // For debugging: Log the sanitized input
-    console.log("Input for AI analysis:", JSON.stringify(input, null, 2));
-
-    // Validate the input against the Zod schema before calling the AI
-    const validated = CostVsProfitAnalysisInputSchema.safeParse(input);
-
-    if (!validated.success) {
-      console.error("AI input validation failed:", validated.error.flatten());
-      return {
-        message: "Data validation failed. Check records for missing/invalid data.",
-        errors: validated.error.flatten().fieldErrors,
-      };
-    }
-
-    // Call the AI flow with the validated data
-    const result = await costVsProfitAnalysis(validated.data);
+    const result = await costVsProfitAnalysis(input);
     return { message: "success", data: result };
 
   } catch (error: any) {
-    // For debugging: Log the error from the AI call
     console.error("AI analysis error:", error);
-    return { message: "Analysis failed. Please try again." };
+    return { message: error.message || "Analysis failed. Please try again." };
   }
 }
