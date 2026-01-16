@@ -15,12 +15,13 @@ import {
 } from '@/components/ui/sidebar';
 import { Logo } from '@/components/icons';
 import { useSidebar } from '@/components/ui/sidebar';
-import { Home, PieChart, Calendar, Shield } from 'lucide-react';
+import { Home, PieChart, Calendar, Shield, User } from 'lucide-react';
 
 const farmerMenuItems = [
   { href: '/dashboard', icon: Home, label: 'Overview' },
   { href: '/dashboard/records', icon: Calendar, label: 'Records' },
   { href: '/dashboard/analysis', icon: PieChart, label: 'Cost Analysis' },
+  { href: '/dashboard/profile', icon: User, label: 'Profile' },
 ];
 
 const adminMenuItems = [
