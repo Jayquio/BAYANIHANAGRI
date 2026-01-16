@@ -5,7 +5,7 @@ export default function AnalysisPage() {
   return (
     <div className="flex flex-col gap-8">
       <PageHeader
-        title="Cost vs. Profit Analysis"
+        title="AI Cost vs. Profit Analysis"
         description="Get AI-powered insights on cost trends and profit margins."
       />
       <AnalysisClient />
