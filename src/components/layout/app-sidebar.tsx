@@ -15,7 +15,8 @@ import {
 } from '@/components/ui/sidebar';
 import { Logo } from '@/components/icons';
 import { useSidebar } from '@/components/ui/sidebar';
-import { Home, PieChart, Calendar, Shield } from 'lucide-react';
+import { Home, PieChart, Calendar, Shield, Settings, LifeBuoy } from 'lucide-react';
+import { Button } from '../ui/button';
 
 const farmerMenuItems = [
   { href: '/dashboard', icon: Home, label: 'Overview' },
@@ -33,13 +34,13 @@ export function AppSidebar() {
   const firestore = useFirestore();
   const { setOpenMobile } = useSidebar();
 
-  // Memoize the user doc reference so it remains stable between renders.
   const userDocRef = useMemo(() => {
     if (!user || !firestore) return null;
     return doc(firestore, `users/${user.uid}`);
   }, [user, firestore]);
-
+  
   const { data: userProfile } = useDoc<any>(userDocRef);
+
 
   const isAdmin = userProfile?.isAdmin === true;
   const menuItems = isAdmin ? adminMenuItems : farmerMenuItems;
@@ -61,7 +62,7 @@ export function AppSidebar() {
         </Link>
       </SidebarHeader>
 
-      <SidebarContent className="p-2">
+      <SidebarContent className="flex-1 p-2">
         <SidebarMenu>
           {menuItems.map((item) => {
             const ActiveIcon = item.icon;
@@ -71,8 +72,10 @@ export function AppSidebar() {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center gap-2 rounded-md px-3 py-2 text-sm ${
-                  active ? 'bg-muted text-primary' : 'text-muted-foreground'
+                className={`flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium ${
+                  active
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                 }`}
                 onClick={handleLinkClick}
               >
@@ -84,9 +87,18 @@ export function AppSidebar() {
         </SidebarMenu>
       </SidebarContent>
 
-      <SidebarFooter>
-        {/* Optional footer content - keep stable */}
-      </SidebarFooter>
+      {!isAdmin && (
+        <SidebarFooter className="p-2">
+            <Button variant="ghost" className="w-full justify-start gap-2 text-muted-foreground">
+              <Settings className="h-4 w-4" />
+              <span>Settings</span>
+            </Button>
+            <Button variant="ghost" className="w-full justify-start gap-2 text-muted-foreground">
+              <LifeBuoy className="h-4 w-4" />
+              <span>Support</span>
+            </Button>
+        </SidebarFooter>
+      )}
     </Sidebar>
   );
 }

@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import {
   onSnapshot,
-  doc,
+  doc as docFn,
   type DocumentReference,
   type DocumentData,
 } from 'firebase/firestore';
@@ -15,29 +15,40 @@ export function useDoc<T = DocumentData>(
 ) {
   const db = useFirestore();
   const [data, setData] = useState<T | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState<boolean>(!!docPath);
   const [error, setError] = useState<Error | null>(null);
+  const prevPayloadRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!docPath) {
+      setData(null);
       setLoading(false);
       return;
     }
 
+    setLoading(true);
+
     let ref: DocumentReference;
     if (typeof docPath === 'string') {
-      ref = doc(db, docPath);
+      ref = docFn(db, docPath);
     } else {
       ref = docPath;
     }
 
     const unsubscribe = onSnapshot(
       ref,
-      (doc) => {
-        if (doc.exists()) {
-          setData({ id: doc.id, ...doc.data() } as T);
+      (snapshot) => {
+        if (snapshot.exists()) {
+          const payload = JSON.stringify(snapshot.data());
+          if (prevPayloadRef.current !== payload) {
+            prevPayloadRef.current = payload;
+            setData({ id: snapshot.id, ...snapshot.data() } as T);
+          }
         } else {
-          setData(null);
+          if (prevPayloadRef.current !== null) {
+            prevPayloadRef.current = null;
+            setData(null);
+          }
         }
         setLoading(false);
       },

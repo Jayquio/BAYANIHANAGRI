@@ -22,13 +22,10 @@ export function useCollection<T = DocumentData>(
 
   useEffect(() => {
     if (!collectionPath) {
-      setData([]);
       setLoading(false);
       return;
     }
-
-    setLoading(true);
-
+    
     let ref: Query | CollectionReference;
     if (typeof collectionPath === 'string') {
       ref = collectionFn(db, collectionPath);
@@ -43,14 +40,7 @@ export function useCollection<T = DocumentData>(
         snapshot.forEach((doc) => {
           result.push({ id: doc.id, ...doc.data() } as T);
         });
-
-        const idsKey = JSON.stringify(result.map((r: any) => r.id));
-        if (prevIdsRef.current !== idsKey) {
-          prevIdsRef.current = idsKey;
-          setData(result);
-        }
-
-        // Set loading false only if data has changed or if there's an error
+        setData(result);
         setLoading(false);
       },
       (err) => {
