@@ -52,13 +52,15 @@ export async function costVsProfitAnalysis(input: CostVsProfitAnalysisInput): Pr
   const ai = getAi();
   const promptText = buildPrompt(input);
 
-  const { output } = await ai.generate({
+  const response = await ai.generate({
     prompt: promptText,
-    output: { schema: CostVsProfitAnalysisOutputSchema },
   });
 
-  if (!output) {
+  const analysisText = response.text;
+
+  if (!analysisText) {
     throw new Error("AI failed to return an analysis.");
   }
-  return output;
+  
+  return { analysis: analysisText };
 }

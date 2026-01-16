@@ -31,7 +31,9 @@ export type YieldPredictionOutput = z.infer<typeof YieldPredictionOutputSchema>;
 function buildYieldPrompt(input: YieldPredictionInput): string {
     return `You are an AI-powered agricultural advisor for Filipino farmers. Based on the historical data, crop type, planting date, expenses, and inputs, predict the yield for the farm.
 
-Provide a predicted yield in sacks/kg, a confidence score (0-1), and insights with planting recommendations. Your analysis should be based on the following information.
+Your response MUST be a valid JSON object with the following keys: "predictedYield" (number), "confidence" (a number between 0 and 1), and "insights" (string).
+
+Your analysis should be based on the following information:
 
 Crop Type: ${input.cropType}
 Planting Date: ${input.plantingDate}
@@ -45,16 +47,24 @@ Past Harvest Data: ${input.pastHarvestData}
 
 export async function yieldPrediction(input: YieldPredictionInput): Promise<YieldPredictionOutput> {
     const ai = getAi();
-
     const promptText = buildYieldPrompt(input);
     
-    const {output} = await ai.generate({
+    const response = await ai.generate({
         prompt: promptText,
-        output: { schema: YieldPredictionOutputSchema },
     });
     
-    if (!output) {
+    const jsonString = response.text;
+    if (!jsonString) {
       throw new Error('AI failed to return a prediction.');
     }
-    return output;
+
+    try {
+      // The AI might wrap the JSON in markdown, so we clean it.
+      const cleanedJson = jsonString.replace(/```json\n?/g, '').replace(/```/g, '').trim();
+      const parsedOutput = JSON.parse(cleanedJson);
+      return parsedOutput;
+    } catch (e) {
+      console.error("Failed to parse AI JSON response:", jsonString, e);
+      throw new Error("The AI returned an unexpected format. Please try again.");
+    }
 }
