@@ -2,38 +2,24 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useMemo } from 'react';
+import { doc } from 'firebase/firestore';
+import { useUser } from '@/firebase/auth/use-user';
+import { useFirestore, useDoc } from '@/firebase';
 import {
   Sidebar,
   SidebarHeader,
   SidebarContent,
   SidebarMenu,
-  SidebarMenuItem,
-  SidebarMenuButton,
   SidebarFooter,
-  useSidebar,
 } from '@/components/ui/sidebar';
 import { Logo } from '@/components/icons';
-import {
-  LayoutDashboard,
-  BookText,
-  LineChart,
-  PieChart,
-  Shield,
-  Settings,
-  HelpCircle,
-} from 'lucide-react';
-import { useUser } from '@/firebase/auth/use-user';
-import { useDoc, useFirestore } from '@/firebase';
-import { doc } from 'firebase/firestore';
+import { useSidebar } from '@/components/ui/sidebar';
+import { Home, PieChart, Calendar, Shield } from 'lucide-react';
 
 const farmerMenuItems = [
-  { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-  { href: '/dashboard/records', icon: BookText, label: 'Farm Records' },
-  {
-    href: '/dashboard/yield-prediction',
-    icon: LineChart,
-    label: 'Yield Prediction',
-  },
+  { href: '/dashboard', icon: Home, label: 'Overview' },
+  { href: '/dashboard/records', icon: Calendar, label: 'Records' },
   { href: '/dashboard/analysis', icon: PieChart, label: 'Cost Analysis' },
 ];
 
@@ -47,7 +33,12 @@ export function AppSidebar() {
   const firestore = useFirestore();
   const { setOpenMobile } = useSidebar();
 
-  const userDocRef = user ? doc(firestore, `users/${user.uid}`) : null;
+  // Memoize the user doc reference so it remains stable between renders.
+  const userDocRef = useMemo(() => {
+    if (!user || !firestore) return null;
+    return doc(firestore, `users/${user.uid}`);
+  }, [user, firestore]);
+
   const { data: userProfile } = useDoc<any>(userDocRef);
 
   const isAdmin = userProfile?.isAdmin === true;
@@ -66,50 +57,36 @@ export function AppSidebar() {
           onClick={handleLinkClick}
         >
           <Logo className="h-8 w-8 text-primary" />
-          <h2 className="font-headline text-lg font-semibold tracking-tight">
-            AgriLog
-          </h2>
+          <h2 className="font-headline text-lg font-semibold tracking-tight">AgriLog</h2>
         </Link>
       </SidebarHeader>
+
       <SidebarContent className="p-2">
         <SidebarMenu>
-          {menuItems.map((item) => (
-            <SidebarMenuItem key={item.href}>
-              <SidebarMenuButton
-                asChild
-                isActive={
-                  pathname.startsWith(item.href) &&
-                  (item.href !== '/dashboard' || pathname === '/dashboard')
-                }
-                tooltip={{ children: item.label }}
+          {menuItems.map((item) => {
+            const ActiveIcon = item.icon;
+            const active = pathname === item.href;
+
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`flex items-center gap-2 rounded-md px-3 py-2 text-sm ${
+                  active ? 'bg-muted text-primary' : 'text-muted-foreground'
+                }`}
+                onClick={handleLinkClick}
               >
-                <Link href={item.href} onClick={handleLinkClick}>
-                  <item.icon />
-                  <span>{item.label}</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          ))}
+                <ActiveIcon className="h-4 w-4" />
+                <span>{item.label}</span>
+              </Link>
+            );
+          })}
         </SidebarMenu>
       </SidebarContent>
-      {!isAdmin && (
-        <SidebarFooter>
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton tooltip={{ children: 'Settings' }}>
-                <Settings />
-                <span>Settings</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton tooltip={{ children: 'Support' }}>
-                <HelpCircle />
-                <span>Support</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </SidebarFooter>
-      )}
+
+      <SidebarFooter>
+        {/* Optional footer content - keep stable */}
+      </SidebarFooter>
     </Sidebar>
   );
 }
