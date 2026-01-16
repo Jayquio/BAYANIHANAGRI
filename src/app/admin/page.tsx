@@ -5,7 +5,7 @@ import { collection, query } from 'firebase/firestore';
 
 import { useCollection, useFirestore } from '@/firebase';
 import { AdminWrapper } from '@/components/layout/admin-wrapper';
-import { AdminClient } from '@/components/dashboard/admin/admin-client';
+import { AdminClient } from './admin-client';
 import { PageHeader } from '@/components/page-header';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
