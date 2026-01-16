@@ -43,7 +43,7 @@ export async function costVsProfitAnalysis(
     );
   }
   const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({model: 'gemini-1.5-flash'});
+  const model = genAI.getGenerativeModel({model: 'gemini-pro'});
 
   const prompt = `You are an expert agricultural analyst specializing in providing cost versus profit analysis for farmers in the Philippines.
 
