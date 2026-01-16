@@ -1,7 +1,7 @@
 'use server';
 
-import {GoogleGenerativeAI} from '@google/generative-ai';
-import {z} from 'zod';
+import { GoogleGenerativeAI } from '@google/generative-ai';
+import { z } from 'zod';
 
 const YieldPredictionInputSchema = z.object({
   cropType: z.string(),
@@ -20,9 +20,7 @@ const YieldPredictionOutputSchema = z.object({
 });
 export type YieldPredictionOutput = z.infer<typeof YieldPredictionOutputSchema>;
 
-export async function yieldPrediction(
-  input: YieldPredictionInput
-): Promise<YieldPredictionOutput> {
+export async function yieldPrediction(input: YieldPredictionInput): Promise<YieldPredictionOutput> {
   const validationResult = YieldPredictionInputSchema.safeParse(input);
   if (!validationResult.success) {
     console.error('AI input validation failed:', validationResult.error);
@@ -31,30 +29,25 @@ export async function yieldPrediction(
 
   const apiKey = process.env.GOOGLE_GENAI_API_KEY;
   if (!apiKey) {
-    throw new Error(
-      'The GOOGLE_GENAI_API_KEY environment variable is not set. Please add it to your .env file.'
-    );
+    throw new Error('The GOOGLE_GENAI_API_KEY environment variable is not set.');
   }
+  
   const genAI = new GoogleGenerativeAI(apiKey);
+  
+  // ✅ FIX: Updated to 1.5-flash to support JSON mode
   const model = genAI.getGenerativeModel({
-    model: 'models/gemini-pro',
+    model: 'gemini-1.5-flash',
     generationConfig: {
-      responseMimeType: 'application/json',
+      responseMimeType: 'application/json', 
     },
   });
 
-  const prompt = `You are an AI-powered agricultural advisor for Filipino farmers. Based on the historical data, crop type, planting date, expenses, and inputs, predict the yield for the farm.
-
-Your response MUST be a valid JSON object matching this schema: ${JSON.stringify(YieldPredictionOutputSchema.shape)}.
-
-Your analysis should be based on the following information:
-- Crop Type: ${input.cropType}
-- Planting Date: ${input.plantingDate}
-- Area (hectares): ${input.area}
-- Expenses (₱): ${input.expenses}
-- Inputs Used: ${input.inputsUsed}
-- Past Harvest Data: ${input.pastHarvestData}
-`;
+  const prompt = `You are an AI advisor. Return valid JSON for: 
+  - Crop: ${input.cropType}
+  - Area: ${input.area} ha
+  - Data: ${input.pastHarvestData}
+  
+  Predict yield (number), confidence (0-1 number), and insights (string).`;
 
   try {
     const result = await model.generateContent(prompt);
@@ -64,14 +57,14 @@ Your analysis should be based on the following information:
 
     const parsedOutput = YieldPredictionOutputSchema.safeParse(jsonOutput);
     if (!parsedOutput.success) {
-        console.error("AI output validation failed:", parsedOutput.error);
-        throw new Error("AI returned data in an unexpected format.");
+      console.error("AI output validation failed:", parsedOutput.error);
+      throw new Error("AI returned unexpected format.");
     }
     
     return parsedOutput.data;
 
   } catch (error: any) {
     console.error('Google AI Error:', error);
-    throw new Error(`The AI failed to generate a prediction. The API returned the following error: ${error.message}`);
+    throw new Error(`AI failed: ${error.message}`);
   }
 }
