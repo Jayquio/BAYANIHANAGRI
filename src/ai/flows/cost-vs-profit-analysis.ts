@@ -11,7 +11,7 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
-export const CostVsProfitAnalysisInputSchema = z.object({
+const CostVsProfitAnalysisInputSchema = z.object({
   farmRecords: z.array(
     z.object({
       cropType: z.string().describe('The type of crop (e.g., rice, corn).'),

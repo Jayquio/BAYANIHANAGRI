@@ -8,7 +8,6 @@ import {
 import {
   costVsProfitAnalysis,
   CostVsProfitAnalysisInput,
-  CostVsProfitAnalysisInputSchema,
 } from "@/ai/flows/cost-vs-profit-analysis";
 import type { FarmRecord } from "@/lib/types";
 
@@ -20,6 +19,28 @@ const yieldPredictionSchema = z.object({
   inputsUsed: z.string().min(1, "Inputs used are required."),
   pastHarvestData: z.string().min(1, "Past harvest data is required."),
 });
+
+// Schema for validation, moved here to fix 'use server' export error.
+const CostVsProfitAnalysisInputSchema = z.object({
+  farmRecords: z.array(
+    z.object({
+      cropType: z.string().describe("The type of crop (e.g., rice, corn)."),
+      harvestDate: z
+        .string()
+        .describe("The date the crop was harvested (YYYY-MM-DD)."),
+      expenses: z
+        .number()
+        .describe("The total expenses for the crop in Philippine pesos."),
+      harvestQuantity: z
+        .number()
+        .describe("The quantity of the harvest in sacks or kilograms."),
+      marketPrice: z
+        .number()
+        .describe("The market price per unit of harvest."),
+    })
+  ),
+});
+
 
 export async function getYieldPrediction(prevState: any, formData: FormData) {
   const validatedFields = yieldPredictionSchema.safeParse({
