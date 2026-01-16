@@ -9,7 +9,7 @@
  */
 
 import {getAi} from '@/ai/genkit';
-import {z} from 'zod';
+import {z} from 'genkit';
 
 const CostVsProfitAnalysisInputSchema = z.object({
   farmRecords: z.array(
@@ -29,11 +29,9 @@ const CostVsProfitAnalysisOutputSchema = z.object({
 });
 export type CostVsProfitAnalysisOutput = z.infer<typeof CostVsProfitAnalysisOutputSchema>;
 
+const ai = getAi();
 
-export async function costVsProfitAnalysis(input: CostVsProfitAnalysisInput): Promise<CostVsProfitAnalysisOutput> {
-  const ai = getAi();
-  
-  const prompt = ai.definePrompt({
+const costVsProfitAnalysisPrompt = ai.definePrompt({
     name: 'costVsProfitAnalysisPrompt',
     input: {schema: CostVsProfitAnalysisInputSchema},
     output: {schema: CostVsProfitAnalysisOutputSchema},
@@ -48,9 +46,11 @@ export async function costVsProfitAnalysis(input: CostVsProfitAnalysisInput): Pr
     - Crop Type: {{cropType}}, Harvest Date: {{harvestDate}}, Expenses: ₱{{expenses}}, Harvest Quantity: {{harvestQuantity}}, Market Price: ₱{{marketPrice}}/unit
     {{/each}}
     `,
-  });
+});
 
-  const {output} = await prompt(input);
+
+export async function costVsProfitAnalysis(input: CostVsProfitAnalysisInput): Promise<CostVsProfitAnalysisOutput> {
+  const {output} = await costVsProfitAnalysisPrompt(input);
   if (!output) {
     throw new Error("AI failed to return an analysis.");
   }

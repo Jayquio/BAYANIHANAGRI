@@ -8,7 +8,7 @@
  */
 
 import {getAi} from '@/ai/genkit';
-import {z} from 'zod';
+import {z} from 'genkit';
 
 const YieldPredictionInputSchema = z.object({
   cropType: z.string().describe('The type of crop (e.g., rice, corn, banana, vegetables).'),
@@ -27,28 +27,27 @@ const YieldPredictionOutputSchema = z.object({
 });
 export type YieldPredictionOutput = z.infer<typeof YieldPredictionOutputSchema>;
 
+const ai = getAi();
+
+const yieldPredictionPrompt = ai.definePrompt({
+  name: 'yieldPredictionPrompt',
+  input: {schema: YieldPredictionInputSchema},
+  output: {schema: YieldPredictionOutputSchema},
+  prompt: `You are an AI-powered agricultural advisor for Filipino farmers. Based on the historical data, crop type, planting date, expenses, and inputs, predict the yield for the farm.
+
+Provide a predicted yield in sacks/kg, a confidence score (0-1), and insights with planting recommendations. Your analysis should be based on the following information.
+
+Crop Type: {{cropType}}
+Planting Date: {{plantingDate}}
+Area (hectares): {{area}}
+Expenses (₱): {{expenses}}
+Inputs Used: {{inputsUsed}}
+Past Harvest Data: {{pastHarvestData}}
+`,
+});
 
 export async function yieldPrediction(input: YieldPredictionInput): Promise<YieldPredictionOutput> {
-    const ai = getAi();
-    
-    const prompt = ai.definePrompt({
-      name: 'yieldPredictionPrompt',
-      input: {schema: YieldPredictionInputSchema},
-      output: {schema: YieldPredictionOutputSchema},
-      prompt: `You are an AI-powered agricultural advisor for Filipino farmers. Based on the historical data, crop type, planting date, expenses, and inputs, predict the yield for the farm.
-
-    Provide a predicted yield in sacks/kg, a confidence score (0-1), and insights with planting recommendations. Your analysis should be based on the following information.
-
-    Crop Type: {{cropType}}
-    Planting Date: {{plantingDate}}
-    Area (hectares): {{area}}
-    Expenses (₱): {{expenses}}
-    Inputs Used: {{inputsUsed}}
-    Past Harvest Data: {{pastHarvestData}}
-    `,
-    });
-
-    const {output} = await prompt(input);
+    const {output} = await yieldPredictionPrompt(input);
     if (!output) {
       throw new Error('AI failed to return a prediction.');
     }
