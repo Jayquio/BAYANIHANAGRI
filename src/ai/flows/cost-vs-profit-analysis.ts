@@ -15,12 +15,12 @@ const CostVsProfitAnalysisInputSchema = z.object({
   farmRecords: z.array(
     z.object({
       cropType: z.string().describe('The type of crop (e.g., rice, corn).'),
-      plantingDate: z.string().describe('The date the crop was planted (YYYY-MM-DD).'),
-      area: z.number().describe('The area of the farm in hectares.'),
+      harvestDate: z.string().describe('The date the crop was harvested (YYYY-MM-DD).'),
       expenses: z.number().describe('The total expenses for the crop in Philippine pesos.'),
       harvestQuantity: z.number().describe('The quantity of the harvest in sacks or kilograms.'),
+      marketPrice: z.number().describe('The market price per unit of harvest.'),
     })
-  ).describe('An array of farm records, each containing crop details, expenses, and harvest quantity.'),
+  ).describe('An array of farm records, each containing crop details, expenses, and harvest data.'),
 });
 export type CostVsProfitAnalysisInput = z.infer<typeof CostVsProfitAnalysisInputSchema>;
 
@@ -39,13 +39,13 @@ const prompt = ai.definePrompt({
   output: {schema: CostVsProfitAnalysisOutputSchema},
   prompt: `You are an expert agricultural analyst specializing in providing cost versus profit analysis for farmers in the Philippines.
 
-  Analyze the provided farm records to identify cost trends and profit margins over time. Provide clear and actionable recommendations for optimizing expenses and improving profitability.
+  Analyze the provided farm records to identify cost trends and profit margins over time. For each record, calculate the revenue (harvestQuantity * marketPrice) and the profit (revenue - expenses).
 
-  Consider factors such as crop type, planting date, area, expenses, and harvest quantity.
+  Provide clear and actionable recommendations for optimizing expenses and improving profitability. Group your analysis by crop type if multiple types are present.
 
   Farm Records:
   {{#each farmRecords}}
-  - Crop Type: {{cropType}}, Planting Date: {{plantingDate}}, Area: {{area}} hectares, Expenses: ₱{{expenses}}, Harvest Quantity: {{harvestQuantity}} sacks/kg
+  - Crop Type: {{cropType}}, Harvest Date: {{harvestDate}}, Expenses: ₱{{expenses}}, Harvest Quantity: {{harvestQuantity}}, Market Price: ₱{{marketPrice}}/unit
   {{/each}}
   `,
 });
