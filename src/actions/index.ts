@@ -17,6 +17,7 @@ const yieldPredictionSchema = z.object({
   area: z.coerce.number().positive("Area must be a positive number."),
   expenses: z.coerce.number().positive("Expenses must be a positive number."),
   inputsUsed: z.string().min(1, "Inputs used are required."),
+  pastHarvestData: z.string().min(1, "Past harvest data is required."),
 });
 
 export async function getYieldPrediction(prevState: any, formData: FormData) {
@@ -26,6 +27,7 @@ export async function getYieldPrediction(prevState: any, formData: FormData) {
     area: formData.get("area"),
     expenses: formData.get("expenses"),
     inputsUsed: formData.get("inputsUsed"),
+    pastHarvestData: formData.get("pastHarvestData"),
   });
 
   if (!validatedFields.success) {
@@ -35,26 +37,9 @@ export async function getYieldPrediction(prevState: any, formData: FormData) {
     };
   }
 
-  // Note: In a real app, you'd fetch relevant past data from Firestore
-  const mockPastData = [
-    {
-      "cropType": "Rice",
-      "harvestQuantity": 120,
-      "area": 2,
-      "expenses": 15000
-    },
-     {
-      "cropType": "Rice",
-      "harvestQuantity": 130,
-      "area": 2,
-      "expenses": 16500
-    }
-  ];
-
   try {
     const input: YieldPredictionInput = {
       ...validatedFields.data,
-      pastHarvestData: JSON.stringify(mockPastData), 
     };
     const result = await yieldPrediction(input);
     return { message: "success", data: result };

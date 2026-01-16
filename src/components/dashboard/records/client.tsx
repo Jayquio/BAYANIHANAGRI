@@ -18,7 +18,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal } from "lucide-react";
+import { MoreHorizontal, XCircle } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -42,7 +42,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useUser } from "@/firebase/auth/use-user";
 import { useFirestore } from "@/firebase";
-import { addDoc, collection, deleteDoc, doc } from "firebase/firestore";
+import { addDoc, collection, deleteDoc, doc, updateDoc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 
 const formSchema = z.object({
@@ -65,6 +65,7 @@ export function RecordsClient({
   const firestore = useFirestore();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [editingRecordId, setEditingRecordId] = useState<string | null>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -86,6 +87,20 @@ export function RecordsClient({
       maximumFractionDigits: 2,
     })}`;
 
+  const handleEditClick = (record: FarmRecordWithProfit) => {
+    setEditingRecordId(record.id);
+    // The date needs to be in 'yyyy-MM-dd' format for the input[type=date]
+    const plantingDate = new Date(record.plantingDate).toISOString().split('T')[0];
+    const harvestDate = new Date(record.harvestDate).toISOString().split('T')[0];
+    form.reset({ ...record, plantingDate, harvestDate });
+  };
+  
+  const cancelEdit = () => {
+    setEditingRecordId(null);
+    form.reset();
+  };
+
+
   async function onSubmit(values: z.infer<typeof formSchema>) {
     if (!user) {
       toast({
@@ -97,19 +112,30 @@ export function RecordsClient({
     }
     setIsSubmitting(true);
     try {
-      const newRecord: FarmRecord = {
-        ...values,
-        farmerId: user.uid,
-      };
-      await addDoc(collection(firestore, "farmRecords"), newRecord);
-      toast({
-        title: "Success",
-        description: "Farm record added successfully.",
-      });
-      form.reset();
+      if (editingRecordId) {
+        // Update existing record
+        const recordRef = doc(firestore, "farmRecords", editingRecordId);
+        await updateDoc(recordRef, values);
+        toast({
+          title: "Success",
+          description: "Farm record updated successfully.",
+        });
+      } else {
+        // Add new record
+        const newRecord: FarmRecord = {
+          ...values,
+          farmerId: user.uid,
+        };
+        await addDoc(collection(firestore, "farmRecords"), newRecord);
+        toast({
+          title: "Success",
+          description: "Farm record added successfully.",
+        });
+      }
+      cancelEdit();
     } catch (error: any) {
       toast({
-        title: "Error adding record",
+        title: `Error ${editingRecordId ? 'updating' : 'adding'} record`,
         description: error.message,
         variant: "destructive",
       });
@@ -191,7 +217,7 @@ export function RecordsClient({
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DropdownMenuItem disabled>Edit</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleEditClick(record)}>Edit</DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() => deleteRecord(record.id)}
                             className="text-destructive"
@@ -220,9 +246,9 @@ export function RecordsClient({
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)}>
               <CardHeader>
-                <CardTitle className="font-headline">Add New Record</CardTitle>
+                <CardTitle className="font-headline">{editingRecordId ? 'Edit Record' : 'Add New Record'}</CardTitle>
                 <CardDescription>
-                  Fill out the form to add a new farm record.
+                  {editingRecordId ? 'Update the details for this record.' : 'Fill out the form to add a new farm record.'}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -340,10 +366,16 @@ export function RecordsClient({
                   )}
                 />
               </CardContent>
-              <CardFooter>
+              <CardFooter className="flex gap-2">
                 <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? "Saving..." : "Save Record"}
+                  {isSubmitting ? "Saving..." : editingRecordId ? "Update Record" : "Save Record"}
                 </Button>
+                {editingRecordId && (
+                  <Button variant="ghost" onClick={cancelEdit}>
+                    <XCircle className="mr-2 h-4 w-4" />
+                    Cancel
+                  </Button>
+                )}
               </CardFooter>
             </form>
           </Form>

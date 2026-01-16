@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useMemo } from "react";
 import { useFormStatus } from "react-dom";
 import { getYieldPrediction } from "@/actions";
 import {
@@ -18,6 +18,9 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Lightbulb, TrendingUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useUser } from "@/firebase/auth/use-user";
+import { useCollection, useFirestore } from "@/firebase";
+import { collection, query, where } from "firebase/firestore";
 
 const initialState = {
   message: "",
@@ -35,6 +38,16 @@ function SubmitButton() {
 export function PredictionClient() {
   const [state, formAction] = useActionState(getYieldPrediction, initialState);
   const { toast } = useToast();
+  const { user } = useUser();
+  const firestore = useFirestore();
+
+  const farmRecordsQuery = useMemo(() => {
+    if (!user) return null;
+    return query(collection(firestore, "farmRecords"), where("farmerId", "==", user.uid));
+  }, [user, firestore]);
+
+  const { data: farmRecords } = useCollection<any>(farmRecordsQuery);
+
 
   useEffect(() => {
     if (state?.message && state.message !== "success") {
@@ -53,10 +66,11 @@ export function PredictionClient() {
           <CardHeader>
             <CardTitle className="font-headline">Yield Prediction</CardTitle>
             <CardDescription>
-              Fill in the details to get an AI-powered yield prediction.
+              Fill in the details to get an AI-powered yield prediction. Your past farm data will be used to improve accuracy.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            <input type="hidden" name="pastHarvestData" value={farmRecords ? JSON.stringify(farmRecords) : "[]"} />
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="cropType">Crop Type</Label>
