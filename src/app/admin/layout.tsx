@@ -1,56 +1,123 @@
-// app/admin/layout.tsx
-// This replaces your existing admin layout with a sidebar-free version
+'use client';
 
 import { ReactNode } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { getAuth, signOut } from 'firebase/auth';
+
+import { useUser } from '@/firebase/auth/use-user';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { Bell, LogOut, ChevronDown, User as UserIcon, Settings, BarChart2 } from 'lucide-react';
+import { Logo } from '@/components/icons';
 
 interface AdminLayoutProps {
   children: ReactNode;
 }
 
 export default function AdminLayout({ children }: AdminLayoutProps) {
+  const { user } = useUser();
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    const auth = getAuth();
+    await signOut(auth);
+    router.push('/login');
+  };
+  
+  const getInitials = (name: string | null | undefined) => {
+    if (!name) return 'A';
+    return name
+      .split(' ')
+      .map((n) => n[0])
+      .join('');
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Top Navigation Bar */}
       <header className="sticky top-0 z-50 w-full border-b bg-card shadow-sm">
         <div className="container mx-auto flex h-16 items-center justify-between px-4">
           {/* Logo/Brand */}
-          <div className="flex items-center gap-2">
-            <div className="text-2xl font-bold text-primary">
-              🌾 AgriLog AI
-            </div>
-          </div>
+          <Link href="/dashboard" className="flex items-center gap-2">
+             <Logo className="h-8 w-8 text-primary" />
+             <h1 className="text-xl font-bold text-primary tracking-tight hidden sm:block">
+              AgriLog AI
+            </h1>
+          </Link>
 
           {/* Navigation Links */}
           <nav className="hidden md:flex items-center gap-6">
-            <a href="/admin" className="text-sm font-medium text-foreground hover:text-primary transition-colors">
+            <Link href="/admin" className="text-sm font-medium text-foreground hover:text-primary transition-colors">
               Dashboard
-            </a>
-            <a href="/admin/farmers" className="text-sm font-medium text-foreground hover:text-primary transition-colors">
+            </Link>
+            {/* The other links are not implemented, so they are disabled for now */}
+            <span className="text-sm font-medium text-muted-foreground cursor-not-allowed">
               Farmers
-            </a>
-            <a href="/admin/records" className="text-sm font-medium text-foreground hover:text-primary transition-colors">
+            </span>
+             <span className="text-sm font-medium text-muted-foreground cursor-not-allowed">
               Farm Records
-            </a>
-            <a href="/admin/analytics" className="text-sm font-medium text-foreground hover:text-primary transition-colors">
+            </span>
+             <span className="text-sm font-medium text-muted-foreground cursor-not-allowed">
               Analytics
-            </a>
-            <a href="/admin/settings" className="text-sm font-medium text-foreground hover:text-primary transition-colors">
+            </span>
+             <span className="text-sm font-medium text-muted-foreground cursor-not-allowed">
               Settings
-            </a>
+            </span>
           </nav>
 
           {/* User Profile */}
           <div className="flex items-center gap-4">
-            <button className="p-2 hover:bg-accent rounded-full transition-colors">
-              <svg className="w-5 h-5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-              </svg>
-            </button>
-            <div className="flex items-center gap-2 cursor-pointer">
-              <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-sm font-medium">
-                A
-              </div>
-            </div>
+            <Button variant="ghost" size="icon" className="rounded-full">
+                <Bell className="h-5 w-5" />
+                <span className="sr-only">Notifications</span>
+            </Button>
+
+            {user && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="flex items-center gap-2 rounded-full p-1 pr-2 focus-visible:ring-0">
+                    <Avatar className="h-8 w-8">
+                       <AvatarImage
+                        src={user.photoURL ?? `https://picsum.photos/seed/${user.uid}/32/32`}
+                        alt={user.displayName ?? "User"}
+                      />
+                      <AvatarFallback>{getInitials(user.displayName)}</AvatarFallback>
+                    </Avatar>
+                     <p className="text-sm font-medium hidden lg:block">{user.displayName ?? user.email}</p>
+                     <ChevronDown className="h-4 w-4 text-muted-foreground hidden lg:block" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuLabel>
+                    <p>Signed in as</p>
+                    <p className="font-medium truncate">{user.email}</p>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => router.push('/dashboard')}>
+                    <BarChart2 className="mr-2 h-4 w-4" />
+                    <span>Farmer View</span>
+                  </DropdownMenuItem>
+                   <DropdownMenuItem>
+                    <Settings className="mr-2 h-4 w-4" />
+                    <span>Settings</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:bg-destructive/10 focus:text-destructive">
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Log out</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
           </div>
         </div>
       </header>
