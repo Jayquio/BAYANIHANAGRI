@@ -65,21 +65,26 @@ export default function DashboardPage() {
   // (and is currently being redirected), show the loading skeleton.
   if (initialDataLoading || userProfile?.isAdmin) {
     return (
-      <div className="flex flex-col gap-8">
-        <PageHeader
-          title="Welcome!"
-          description="Loading your dashboard..."
-        >
-        </PageHeader>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <Skeleton className="h-28" />
-          <Skeleton className="h-28" />
-          <Skeleton className="h-28" />
-          <Skeleton className="h-28" />
-        </div>
-        <div className="grid gap-6 lg:grid-cols-2">
-          <Skeleton className="h-80" />
-          <Skeleton className="h-80" />
+      <div className="container mx-auto px-4">
+        <div className="flex flex-col gap-8 py-8">
+          <PageHeader
+            title="Dashboard"
+            description="Loading your farm overview..."
+          />
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <Skeleton className="h-28" />
+            <Skeleton className="h-28" />
+            <Skeleton className="h-28" />
+            <Skeleton className="h-28" />
+          </div>
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+            <div className="lg:col-span-2">
+              <Skeleton className="h-80 w-full" />
+            </div>
+            <div className="lg:col-span-1">
+              <Skeleton className="h-80 w-full" />
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -87,22 +92,28 @@ export default function DashboardPage() {
 
   // Otherwise, render the farmer's dashboard.
   return (
-    <div className="flex flex-col gap-8">
-      <PageHeader
-        title={`Welcome Back, ${user?.displayName?.split(' ')[0] || 'Farmer'}!`}
-        description="Here's an overview of your farm's performance."
-      >
-        <Button asChild>
-          <Link href="/dashboard/records">
-            <PlusCircle className="mr-2 h-4 w-4" />
-            Add New Record
-          </Link>
-        </Button>
-      </PageHeader>
-      <Overview records={recordsWithProfit} />
-      <div className="grid gap-6 lg:grid-cols-2">
-        <YieldOverTimeChart records={recordsWithProfit} />
-        <RecentRecords records={recordsWithProfit} />
+    <div className="container mx-auto px-4">
+      <div className="flex flex-col gap-8 py-8">
+        <PageHeader
+          title={`Welcome Back, ${user?.displayName?.split(' ')[0] || 'Farmer'}!`}
+          description="Here's an overview of your farm's performance."
+        >
+          <Button asChild>
+            <Link href="/dashboard/records">
+              <PlusCircle className="mr-2 h-4 w-4" />
+              Add New Record
+            </Link>
+          </Button>
+        </PageHeader>
+        <Overview records={recordsWithProfit} />
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          <div className="lg:col-span-2">
+            <YieldOverTimeChart records={recordsWithProfit} />
+          </div>
+          <div className="lg:col-span-1">
+            <RecentRecords records={recordsWithProfit} />
+          </div>
+        </div>
       </div>
     </div>
   );
