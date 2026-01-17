@@ -36,7 +36,7 @@ export async function costVsProfitAnalysis(input: CostVsProfitAnalysisInput): Pr
   Provide a cost vs profit summary. Just give the text.`;
 
   try {
-    const rawAnalysis = await callHuggingFace('google/flan-t5-large', prompt, { max_new_tokens: 400 });
+    const rawAnalysis = await callHuggingFace('mistralai/Mistral-7B-Instruct-v0.2', prompt, { max_new_tokens: 400 });
     return { analysis: rawAnalysis };
   } catch (err: any) {
     // The callHuggingFace provider already normalizes errors. We just log and re-throw.
