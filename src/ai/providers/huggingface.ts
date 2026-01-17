@@ -1,3 +1,4 @@
+
 // Simple Hugging Face Inference API wrapper for server-side usage.
 // Usage: callHuggingFace('google/flan-t5-large', 'Your prompt here')
 import fetch from 'node-fetch';
@@ -54,27 +55,20 @@ export async function callHuggingFace(
 
   if (!res.ok) {
     const text = await res.text();
-    console.error('Hugging Face error response body:', text);
+    console.error('Hugging Face error', { status: res.status, statusText: res.statusText, body: text });
 
-    if (res.status === 410) {
-      throw new Error(
-        'Hugging Face 410: model not available. Check model availability. Raw: ' +
-          text
-      );
+    // Normalize common errors into friendly messages
+    if (res.status === 401) throw new Error('Invalid Hugging Face API key (401).');
+    if (res.status === 403) throw new Error('Permission denied for the requested model (403).');
+    if (res.status === 404) throw new Error(`Model '${model}' not found (404). Check the model name.`);
+    if (res.status === 410) throw new Error('Model not available or endpoint deprecated (410).');
+    if (res.status === 429) throw new Error('Rate limited by Hugging Face (429). Try again later.');
+    
+    if (text.includes('Model loading') || text.includes('model is loading')) {
+        return 'Model is warming up — please try again in a few seconds.';
     }
 
-    // Normalize common HF errors for UI
-    const message = (() => {
-      if (res.status === 401) return 'Invalid Hugging Face API key.';
-      if (res.status === 429)
-        return 'Hugging Face rate limit reached. Try again later.';
-      if (text.includes('Model loading') || text.includes('model is loading')) {
-        return 'Model is warming up — please try again in a few seconds.';
-      }
-      return `Hugging Face API error: ${res.status} ${res.statusText}`;
-    })();
-    const err = new Error(message);
-    // attach raw response for server logs (not sent to client)
+    const err = new Error(`Hugging Face API error: ${res.status} ${res.statusText}`);
     // @ts-ignore
     err.details = text;
     throw err;

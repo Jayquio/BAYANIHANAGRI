@@ -1,3 +1,4 @@
+
 'use server';
 
 import { z } from 'zod';
@@ -129,7 +130,7 @@ export async function costVsProfitAnalysis(input: CostVsProfitAnalysisInput): Pr
   }));
 
   const prompt = buildAnalysisPrompt(totals, sampleRecords);
-  const model = 'mistralai/Mistral-7B-Instruct-v0.2';
+  const model = 'google/flan-t5-large';
 
   try {
     const rawResponse = await callHuggingFace(model, prompt, { max_new_tokens: 1024 });

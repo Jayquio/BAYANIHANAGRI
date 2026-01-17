@@ -1,3 +1,4 @@
+
 'use server';
 
 import { z } from 'zod';
@@ -48,7 +49,7 @@ export async function yieldPrediction(input: YieldPredictionInput): Promise<Yiel
   Do not include any other text, explanation, or formatting outside of the single JSON object.`;
 
   try {
-    const rawJsonString = await callHuggingFace('mistralai/Mistral-7B-Instruct-v0.2', prompt, { max_new_tokens: 500 });
+    const rawJsonString = await callHuggingFace('google/flan-t5-large', prompt, { max_new_tokens: 500 });
     
     // The model might return the JSON inside markdown ```json ... ```, so let's strip that.
     const cleanedString = rawJsonString.replace(/```json/g, '').replace(/```/g, '').trim();
