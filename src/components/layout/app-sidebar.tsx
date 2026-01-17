@@ -64,7 +64,9 @@ export function AppSidebar() {
 
 
   const handleLinkClick = () => {
-    setOpenMobile(false);
+    if (isMobile) {
+      setOpenMobile(false);
+    }
   };
 
   return (
