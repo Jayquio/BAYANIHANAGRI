@@ -63,8 +63,20 @@ export async function yieldPrediction(input: YieldPredictionInput): Promise<Yiel
     
     return parsedOutput.data;
 
-  } catch (error: any) {
-    console.error('Google AI Error:', error);
-    throw new Error(`AI failed: ${error.message}`);
+  } catch (err: any) {
+    console.error('Generative AI error (yield-prediction):', err);
+
+    const msg = (() => {
+        const text = (err?.message ?? JSON.stringify(err)).toString();
+        if (text.includes('API_KEY_SERVICE_BLOCKED')) {
+            return 'AI service blocked for this API key or project. Check that the Generative Language API is enabled, billing is active, and the API key is allowed to call this API.';
+        }
+        if (text.includes('API key')) {
+            return 'AI API key error. Ensure GOOGLE_GENAI_API_KEY is valid and has permission to call the Generative Language API.';
+        }
+        return 'AI service error. Check server logs for details.';
+    })();
+    
+    throw new Error(msg);
   }
 }
