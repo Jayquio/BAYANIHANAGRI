@@ -1,25 +1,10 @@
 
 'use server';
 
-import { z } from 'zod';
-import { callHuggingFace } from '@/ai/providers/huggingface';
+import { callLocalModelForYieldPrediction } from '@/ai/providers/local-model';
+import { YieldPredictionInputSchema, type YieldPredictionInput, type YieldPredictionOutput } from '@/ai/schemas/prediction';
 
-const YieldPredictionInputSchema = z.object({
-  cropType: z.string(),
-  plantingDate: z.string(),
-  area: z.number(),
-  expenses: z.number(),
-  inputsUsed: z.string(),
-  pastHarvestData: z.string(),
-});
-export type YieldPredictionInput = z.infer<typeof YieldPredictionInputSchema>;
-
-const YieldPredictionOutputSchema = z.object({
-  predictedYield: z.number(),
-  confidence: z.number(),
-  insights: z.string(),
-});
-export type YieldPredictionOutput = z.infer<typeof YieldPredictionOutputSchema>;
+export type { YieldPredictionInput, YieldPredictionOutput };
 
 export async function yieldPrediction(input: YieldPredictionInput): Promise<YieldPredictionOutput> {
   const validationResult = YieldPredictionInputSchema.safeParse(input);
@@ -49,26 +34,14 @@ export async function yieldPrediction(input: YieldPredictionInput): Promise<Yiel
   Do not include any other text, explanation, or formatting outside of the single JSON object.`;
 
   try {
-    const rawJsonString = await callHuggingFace('google/flan-t5-large', prompt, { max_new_tokens: 500 });
-    
-    // The model might return the JSON inside markdown ```json ... ```, so let's strip that.
-    const cleanedString = rawJsonString.replace(/```json/g, '').replace(/```/g, '').trim();
-
-    const jsonOutput = JSON.parse(cleanedString);
-
-    const parsedOutput = YieldPredictionOutputSchema.safeParse(jsonOutput);
-    if (!parsedOutput.success) {
-      console.error("AI output validation failed:", parsedOutput.error);
-      throw new Error("AI returned an unexpected format.");
-    }
-    
-    return parsedOutput.data;
+    const result = await callLocalModelForYieldPrediction(prompt);
+    return result;
 
   } catch (err: any) {
     console.error('AI prediction error in flow:', err);
     if (err instanceof SyntaxError) {
       throw new Error("AI returned invalid JSON. Please try again.");
     }
-    throw err; // Re-throw other errors (e.g., from the provider)
+    throw err; // Re-throw other errors
   }
 }
