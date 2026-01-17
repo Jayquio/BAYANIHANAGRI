@@ -12,18 +12,39 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Lightbulb, Bot, PlusCircle } from "lucide-react";
+import {
+  Lightbulb,
+  Bot,
+  PlusCircle,
+  TrendingUp,
+  DollarSign,
+  CheckCircle,
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useUser } from "@/firebase/auth/use-user";
 import { useCollection, useFirestore } from "@/firebase";
 import { collection, query, where } from "firebase/firestore";
+import type { CostVsProfitAnalysisOutput } from "@/ai/flows/cost-vs-profit-analysis";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 type AnalysisState = {
   message: string;
-  data?: {
-    analysis: string;
-  };
+  data?: CostVsProfitAnalysisOutput;
+};
+
+const formatCurrency = (amount: number) => {
+  return `₱ ${amount.toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
 };
 
 export function AnalysisClient() {
@@ -70,6 +91,149 @@ export function AnalysisClient() {
     });
   };
 
+  const renderAnalysisResult = () => {
+    if (!analysisResult?.data) return null;
+
+    const { summary, metrics, monthlyTrends, recommendations } =
+      analysisResult.data;
+
+    return (
+      <div className="space-y-8">
+        <Card className="bg-secondary/50">
+          <CardHeader>
+            <CardTitle className="font-headline flex items-center gap-2">
+              <Bot className="text-primary" /> AI Analysis Summary
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground">{summary}</p>
+          </CardContent>
+        </Card>
+
+        {/* Metrics */}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">
+                Total Revenue
+              </CardTitle>
+              <DollarSign className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {formatCurrency(metrics.totalRevenue)}
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">Total Cost</CardTitle>
+              <DollarSign className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-destructive">
+                {formatCurrency(metrics.totalCost)}
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">
+                Total Profit
+              </CardTitle>
+              <DollarSign className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div
+                className={`text-2xl font-bold ${
+                  metrics.totalProfit >= 0 ? "text-primary" : "text-destructive"
+                }`}
+              >
+                {formatCurrency(metrics.totalProfit)}
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">
+                Profit Margin
+              </CardTitle>
+              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {(metrics.profitMargin * 100).toFixed(1)}%
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Monthly Trends */}
+        {monthlyTrends && monthlyTrends.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Monthly Trends</CardTitle>
+              <CardDescription>
+                A breakdown of performance over time.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Period</TableHead>
+                    <TableHead className="text-right">Profit</TableHead>
+                    <TableHead>Observation</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {monthlyTrends.map((trend) => (
+                    <TableRow key={trend.period}>
+                      <TableCell className="font-medium">
+                        {trend.period}
+                      </TableCell>
+                      <TableCell
+                        className={`text-right font-medium ${
+                          trend.profit >= 0
+                            ? "text-primary"
+                            : "text-destructive"
+                        }`}
+                      >
+                        {formatCurrency(trend.profit)}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {trend.observation}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Recommendations */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="font-headline flex items-center gap-2">
+              <Lightbulb className="text-primary" /> AI Recommendations
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ul className="space-y-3">
+              {recommendations.map((rec, index) => (
+                <li key={index} className="flex items-start gap-3">
+                  <CheckCircle className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
+                  <span>{rec}</span>
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  };
+  
   if (recordsLoading) {
     return (
       <div className="space-y-8">
@@ -105,36 +269,36 @@ export function AnalysisClient() {
       </Card>
 
       {isPending && (
-        <Card>
-          <CardHeader>
-            <Skeleton className="h-6 w-1/2" />
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-3/4" />
-          </CardContent>
-        </Card>
+         <div className="space-y-8">
+            <Card>
+                <CardHeader>
+                    <Skeleton className="h-7 w-1/3" />
+                </CardHeader>
+                <CardContent>
+                    <Skeleton className="h-5 w-full" />
+                    <Skeleton className="h-5 w-2/3 mt-2" />
+                </CardContent>
+            </Card>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <Skeleton className="h-28" />
+                <Skeleton className="h-28" />
+                <Skeleton className="h-28" />
+                <Skeleton className="h-28" />
+            </div>
+            <Card>
+                <CardHeader>
+                    <Skeleton className="h-7 w-1/4" />
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <Skeleton className="h-10 w-full" />
+                    <Skeleton className="h-10 w-full" />
+                    <Skeleton className="h-10 w-full" />
+                </CardContent>
+            </Card>
+        </div>
       )}
 
-      {analysisResult?.data && (
-        <Card className="bg-secondary">
-          <CardHeader>
-            <CardTitle className="font-headline flex items-center gap-2">
-              <Bot className="text-primary" /> Cost vs. Profit Analysis
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Alert>
-              <Lightbulb className="h-4 w-4" />
-              <AlertTitle>AI Insights & Recommendations</AlertTitle>
-              <AlertDescription className="whitespace-pre-wrap">
-                {analysisResult.data.analysis}
-              </AlertDescription>
-            </Alert>
-          </CardContent>
-        </Card>
-      )}
+      {analysisResult?.data && renderAnalysisResult()}
 
       {!isPending && !analysisResult && hasRecords && (
         <div className="flex h-64 items-center justify-center rounded-lg border-2 border-dashed border-border bg-card p-8 text-center">
